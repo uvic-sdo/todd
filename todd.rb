@@ -1,14 +1,13 @@
 require 'todd_model'
+require 'todd_util'
 require 'digest/md5'
 
 config = {
-  :default_db_path  =>  '/home/carl/dev/todd/test.db',
-  :config_filename  =>  '.todd',
-  :default_config   =>  <<-eos
-conf = {
-  :todd_hash      =>  '%s'
-}
-eos
+  :default_db_path  =>  "/home/carl/dev/todd/test.db",
+  :config_filename  =>  ".todd",
+  :default_category =>  "default",
+  :default_config   =>  "conf = {\n  :todd_hash      =>  '%s'\n}",
+  :output_format    =>  :human      #:human -> human readable output
 }
 
 module Docs
@@ -49,7 +48,7 @@ class Todd
   end
 
   def add task_str
-    category_name = "default"
+    category_name = @config[:default_category]
     task_str = task_str.sub(/#(\S*)/) do |cat|
       puts "Cat name: #{$1}"
       category_name = $1
@@ -61,6 +60,7 @@ class Todd
 
     begin
       category = Category.get!(:name => category_name)
+      category.save
     rescue DataMapper::ObjectNotFoundError => e
       category = Category.new(:name => category_name)
       category.save
@@ -74,19 +74,31 @@ class Todd
   end
 
   def list
-    Task.all.each do |task|
-      puts "%d\t%s\t%s" % [task.id, task.title, task.category.name]
+    Category.all.each do |cat|
+      if cat.name != @config[:default_category]
+        puts cat.format_to @config[:output_format]
+      end
+
+      cat.tasks.all.each do |task|
+        puts task.format_to @config[:output_format]
+      end
+
+      print "\n"
     end
   end
 
   def find
   end
 
-  def start
+  def start id
+    t = Task.get(id).start
+    puts t ? "Task #{t.id} started" : "Task already running"
   end
 
   def stop id
-    p id
+    t = Task.get(id).stop
+    puts t ? "Task #{t.id} stopped" : "Task already stopped"
+    puts time_period_to_s t.total_time if t
   end
 
   def add_remote
