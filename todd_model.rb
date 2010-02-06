@@ -1,21 +1,52 @@
 require 'rubygems'
-require 'dm-core'
-require 'dm-validations'
-require 'dm-timestamps'
+require 'active_record'
 
-# Setup DataMapper
+# Setup Active Record
 
-def setup_db path = '/home/carl/dev/todd/test.db', adapter = 'sqlite3'
-  DataMapper.setup(:default, adapter + '://' + path)
-  begin
-    File::Stat.new(path)
-  rescue 
-    DataMapper.auto_migrate!
+ActiveRecord::Base.logger = Logger.new(STDERR)
+ActiveRecord::Base.colorize_logging = true
+
+ActiveRecord::Base.establish_connection(
+  :adapter  => 'sqlite3',
+  :database => '/home/carl/dev/todd/todd.db'
+)
+
+ActiveRecord::Schema.define do
+  create_table :categories do |t|
+    t.string        :name,    :null => false
+
+    t.timestamps
+  end
+
+  create_table :tasks do |t|
+    t.string      :title,       :null => false
+    t.text        :notes,       :default => ""
+    t.boolean     :running,     :default => false
+    t.datetime    :start_time
+    t.datetime    :total_time
+
+    t.references :category
+
+    t.timestamps
+  end
+
+  create_table :archived_tasks do |t|
+    t.string      :title,       :null => false
+    t.text        :notes,       :default => ""
+    t.boolean     :running,     :default => false
+    t.datetime    :start_time
+    t.datetime    :total_time
+
+    t.references :category
+
+    t.timestamps
   end
 end
 
-class Category
-  include DataMapper::Resource
+class Category < ActiveRecord::Base
+  has_many :tasks, :dependent => :destroy
+  has_many :archived_tasks
+  validates_uniqueness_of :name
 
   def format_to formatting = :human
     format_str = ""
@@ -27,22 +58,12 @@ class Category
     end
     
     format_str % @name
-
   end
-
-  # SQL Schema
-  property :id,           Serial
-  property :name,         String,     :required => true
-  property :created_at,   DateTime
-  property :updated_at,   DateTime
-
-  has n, :tasks
-
-  validates_is_unique :name
 end
 
-class Task
-  include DataMapper::Resource
+class Task < ActiveRecord::Base
+  belongs_to :category
+  validates_uniqueness_of :title
 
   def format_to formatting = :human
     format_str = ""
@@ -58,34 +79,35 @@ class Task
   end
 
   def start
-    return false if @running
-    @start_time = Time.now
+    return nil if @running
+    @start_time = DateTime.now
     @running = true
 
-    return self
+    self
   end
 
   def stop
-    return false if !@running
-    @total_time += (Time.now - @start_time)
+    return nil if !@running
+    @total_time += (DateTime.now - @start_time)
     @start_time = nil
     @running = false
 
-    return self
+    self
   end
 
-  # SQL Schema
-  property :id,           Serial
-  property :title,        String,     :required => true
-  property :notes,        Text,       :default => ""
-  property :running,      Boolean,    :default => false
-  property :start_time,   Time
-  property :total_time,   Time,       :default => Time.at(0)
-  property :created_at,   DateTime
-  property :updated_at,   DateTime
-  property :deleted,      ParanoidBoolean
-  property :deleted_at,   ParanoidDateTime
-  
-  belongs_to :category
+  def before_destroy
+    archived_task = ArchivedTask.new do |t|
+      t.attributes = @attributes
+    end
+  end
 end
 
+class ArchivedTask < ActiveRecord::Base
+  belongs_to :category
+  validates_uniqueness_of :title
+
+  def restore
+    # TODO :: Restore category if needed
+    # TODO :: Restore task
+  end
+end
