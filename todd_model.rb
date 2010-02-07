@@ -11,37 +11,37 @@ ActiveRecord::Base.establish_connection(
   :database => '/home/carl/dev/todd/todd.db'
 )
 
-ActiveRecord::Schema.define do
-  create_table :categories do |t|
-    t.string        :name,    :null => false
-
-    t.timestamps
-  end
-
-  create_table :tasks do |t|
-    t.string      :title,       :null => false
-    t.text        :notes,       :default => ""
-    t.boolean     :running,     :default => false
-    t.datetime    :start_time
-    t.datetime    :total_time
-
-    t.references :category
-
-    t.timestamps
-  end
-
-  create_table :archived_tasks do |t|
-    t.string      :title,       :null => false
-    t.text        :notes,       :default => ""
-    t.boolean     :running,     :default => false
-    t.datetime    :start_time
-    t.datetime    :total_time
-
-    t.references :category
-
-    t.timestamps
-  end
-end
+#ActiveRecord::Schema.define do
+#  create_table :categories do |t|
+#    t.string        :name,    :null => false
+#
+#    t.timestamps
+#  end
+#
+#  create_table :tasks do |t|
+#    t.string      :title,       :null => false
+#    t.text        :notes,       :default => ""
+#    t.boolean     :running,     :default => false
+#    t.datetime    :start_time
+#    t.datetime    :total_time
+#
+#    t.references :category
+#
+#    t.timestamps
+#  end
+#
+#  create_table :archived_tasks do |t|
+#    t.string      :title,       :null => false
+#    t.text        :notes,       :default => ""
+#    t.boolean     :running,     :default => false
+#    t.datetime    :start_time
+#    t.datetime    :total_time
+#
+#    t.references :category
+#
+#    t.timestamps
+#  end
+#end
 
 class Category < ActiveRecord::Base
   has_many :tasks, :dependent => :destroy
@@ -57,13 +57,12 @@ class Category < ActiveRecord::Base
         puts "ERROR: Cannot format Category to #{formatting}"
     end
     
-    format_str % @name
+    format_str % name
   end
 end
 
 class Task < ActiveRecord::Base
   belongs_to :category
-  validates_uniqueness_of :title
 
   def format_to formatting = :human
     format_str = ""
@@ -73,29 +72,44 @@ class Task < ActiveRecord::Base
       else
         puts "ERROR: Cannot format Task to #{formatting}"
     end
+
+    puts "Task running? "+(running ? 'true' : 'false')
     
-    format_str % [@id, @title, (@running ? DateTime.now - @start_time : 'Not Running')]
+    format_str % [id, title, (running ? DateTime.now - start_time : 'Not Running')]
 
   end
 
   def start
-    return nil if @running
-    @start_time = DateTime.now
-    @running = true
+    return nil if running
+    start_time = DateTime.now
+    running = true
 
+    self
+  end
+
+  def start!
+    self.start
+    self.save
     self
   end
 
   def stop
-    return nil if !@running
-    @total_time += (DateTime.now - @start_time)
-    @start_time = nil
-    @running = false
+    return nil if !running
+    total_time += (DateTime.now - start_time)
+    start_time = nil
+    running = false
 
     self
   end
 
+  def stop!
+    self.stop
+    self.save
+    self
+  end
+
   def before_destroy
+    puts "before destroy!!"
     archived_task = ArchivedTask.new do |t|
       t.attributes = @attributes
     end
@@ -104,7 +118,6 @@ end
 
 class ArchivedTask < ActiveRecord::Base
   belongs_to :category
-  validates_uniqueness_of :title
 
   def restore
     # TODO :: Restore category if needed

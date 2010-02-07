@@ -58,16 +58,8 @@ class Todd
 
     puts "Task: #{task_str}"
 
-    begin
-      category = Category.get!(:name => category_name)
-      category.save
-    rescue DataMapper::ObjectNotFoundError => e
-      category = Category.new(:name => category_name)
-      category.save
-    end
-
-    task = category.tasks.new(:title => task_str)
-    task.save
+    category = Category.find_or_create_by_name(category_name)
+    task = category.tasks.create(:title => task_str)
   end
 
   def rm
@@ -91,12 +83,12 @@ class Todd
   end
 
   def start id
-    t = Task.get(id).start
+    t = Task.find(id).start!
     puts t ? "Task #{t.id} started" : "Task already running"
   end
 
   def stop id
-    t = Task.get(id).stop
+    t = Task.find(id).stop!
     puts t ? "Task #{t.id} stopped" : "Task already stopped"
     puts time_period_to_s t.total_time if t
   end
@@ -120,8 +112,6 @@ rescue ScriptError=>e
 end
 
 todd = Todd.new(config)
-
-setup_db config[:default_db_path]
 
 if ARGV.length > 0
   command = ARGV.shift
