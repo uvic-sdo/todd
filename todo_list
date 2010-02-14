@@ -1,0 +1,9 @@
+Todo List:
+
+* Use ActiveRecord migrations and make a Rakefile to ease upgrading a database
+* Refactor code?  Multiple Files?  Or single script?
+* Refactor command line option parsing
+* Clock in and Clock out each time you start/stop a task.  New table: records
+* Extensible output formatting system
+* Todd-Repl to do batch task-management
+* ~/.todd config file for global options, ./.todd for local todo-lists

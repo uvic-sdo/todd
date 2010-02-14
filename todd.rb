@@ -36,17 +36,28 @@ class Todd
     @config = config
   end
 
+  def get_todolist
+    TodoList.first(:conditions => { :md5_id => @config[:todd_hash] })
+  end
+
   # COMMANDS
   
   def init
+    if File.exists?(@config[:config_filename])
+      puts "Todd is already initialized in the local directory"
+      return
+    end
+
     current_dir = Dir.getwd
     current_dir_md5 = Digest::MD5.hexdigest(current_dir)
+
+    TodoList.create(:md5_id => current_dir_md5)
 
     File.open(@config[:config_filename], 'w') do |f|
       f.write(sprintf(@config[:default_config],current_dir_md5))
     end
 
-    p "Initialized Todd in #{current_dir}"
+    puts "Initialized Todd in #{current_dir}"
   end
 
   def add task_str
@@ -60,17 +71,16 @@ class Todd
 
     puts "Task: #{task_str}"
 
-    category = Category.find_or_create_by_name(category_name)
+    category = get_todolist.categories.find_or_create_by_name(category_name)
     task = category.tasks.create(:title => task_str)
   end
 
   def rm id
     t = Task.find(id).destroy
-
   end
 
   def list
-    Category.all.each do |cat|
+    get_todolist.categories.all.each do |cat|
       next if !cat.visible?
 
       if cat.name != @config[:default_category]
@@ -115,7 +125,9 @@ begin
   eval File.open(config[:config_filename], 'r').read
   config = conf.merge(config) unless conf == nil
 rescue ScriptError=>e
-  warn("Error reading #{config_filename}, you must run todd init to use todd")
+  warn("Error reading #{config_filename}, you might have an error in your local .todd file")
+rescue
+  warn("Error finding #{config_filename}") unless ARGV.include? "init"
 end
 
 todd = Todd.new(config)

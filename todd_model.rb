@@ -14,8 +14,16 @@ ActiveRecord::Base.establish_connection(
 )
 
 #ActiveRecord::Schema.define do
+#  create_table :todo_lists do |t|
+#    t.string      :md5_id,      :null => false
+#
+#    t.timestamps
+#  end
+#
 #  create_table :categories do |t|
-#    t.string        :name,    :null => false
+#    t.string      :name,        :null => false
+#
+#    t.references  :todo_list
 #
 #    t.timestamps
 #  end
@@ -44,6 +52,11 @@ ActiveRecord::Base.establish_connection(
 #    t.timestamps
 #  end
 #end
+
+class TodoList < ActiveRecord::Base
+  has_many :categories, :dependent => :destroy
+  validates_uniqueness_of :md5_id
+end
 
 class Category < ActiveRecord::Base
   has_many :tasks, :dependent => :destroy
