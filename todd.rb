@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'todd_model'
 require 'todd_util'
 require 'digest/md5'
@@ -62,11 +64,15 @@ class Todd
     task = category.tasks.create(:title => task_str)
   end
 
-  def rm
+  def rm id
+    t = Task.find(id).destroy
+
   end
 
   def list
     Category.all.each do |cat|
+      next if !cat.visible?
+
       if cat.name != @config[:default_category]
         puts cat.format_to @config[:output_format]
       end
@@ -85,12 +91,13 @@ class Todd
   def start id
     t = Task.find(id).start!
     puts t ? "Task #{t.id} started" : "Task already running"
+    puts t.format_to @config[:output_format] if t
   end
 
   def stop id
     t = Task.find(id).stop!
     puts t ? "Task #{t.id} stopped" : "Task already stopped"
-    puts time_period_to_s t.total_time if t
+    puts t.format_to @config[:output_format] if t
   end
 
   def add_remote
@@ -132,5 +139,5 @@ end
 puts "Usage: todd [OPTION] [ARGS]"
 
 Docs::Short.keys.each do |command|
-  docs_for key
+  docs_for command
 end

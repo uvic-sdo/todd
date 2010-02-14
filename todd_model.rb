@@ -1,10 +1,12 @@
 require 'rubygems'
 require 'active_record'
 
+require 'todd_util'
+
 # Setup Active Record
 
-ActiveRecord::Base.logger = Logger.new(STDERR)
-ActiveRecord::Base.colorize_logging = true
+#ActiveRecord::Base.logger = Logger.new(STDERR)
+#ActiveRecord::Base.colorize_logging = true
 
 ActiveRecord::Base.establish_connection(
   :adapter  => 'sqlite3',
@@ -23,7 +25,7 @@ ActiveRecord::Base.establish_connection(
 #    t.text        :notes,       :default => ""
 #    t.boolean     :running,     :default => false
 #    t.datetime    :start_time
-#    t.datetime    :total_time
+#    t.datetime    :total_time,  :default => Time.at(0)
 #
 #    t.references :category
 #
@@ -59,6 +61,10 @@ class Category < ActiveRecord::Base
     
     format_str % name
   end
+
+  def visible?
+    (tasks.count > 0)
+  end
 end
 
 class Task < ActiveRecord::Base
@@ -68,51 +74,57 @@ class Task < ActiveRecord::Base
     format_str = ""
     case formatting
       when :human
-        format_str = "[%2s] [%-60s] [%11s]"
+        # sample: [id] [title] [session_time] [total_time]
+        format_str = "[%2s] [%-40s] [%11s] [%11s]"
       else
         puts "ERROR: Cannot format Task to #{formatting}"
     end
 
-    puts "Task running? "+(running ? 'true' : 'false')
-    
-    format_str % [id, title, (running ? DateTime.now - start_time : 'Not Running')]
+    format_str % [
+      id,
+      title,
+      (running ? time_period_to_s(session_time) : 'Not Running'),
+      (total_time ? time_period_to_s(total_time.to_i) : 'Never Run')
+    ]
 
   end
 
   def start
     return nil if running
-    start_time = DateTime.now
-    running = true
+    self[:start_time] = Time.now
+    toggle(:running)
 
     self
   end
 
   def start!
-    self.start
+    return nil if !self.start
     self.save
     self
   end
 
   def stop
     return nil if !running
-    total_time += (DateTime.now - start_time)
-    start_time = nil
-    running = false
+    self[:total_time] += (Time.now - start_time)
+    self[:start_time] = nil
+    toggle(:running)
 
     self
   end
 
   def stop!
-    self.stop
+    return nil if !self.stop
     self.save
     self
   end
 
   def before_destroy
-    puts "before destroy!!"
-    archived_task = ArchivedTask.new do |t|
-      t.attributes = @attributes
-    end
+    ArchivedTask.create(self.clone.attributes)
+  end
+
+  def session_time
+    return Time.now - start_time if running
+    0
   end
 end
 
