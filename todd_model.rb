@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'active_record'
-require 'yaml'
 
 require 'todd_util'
 

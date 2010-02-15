@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'active_record'
-require 'yaml'
 require 'highline/import'
 
 task :migrate => :enviroment do
@@ -20,8 +19,7 @@ task :migration do
 class #{migration_name} < ActiveRecord::Migration
   def self.up
   end
-
-  def self.down
+def self.down
   end
 end
     eos
