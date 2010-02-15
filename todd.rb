@@ -120,9 +120,8 @@ class Todd
 end
 
 # Parse the .todd file if it exists
-conf = nil
 begin
-  eval File.open(config[:config_filename], 'r').read
+  conf = YAML.load(File.open(config[:config_filename], 'r').read)
   config = conf.merge(config) unless conf == nil
 rescue ScriptError=>e
   warn("Error reading #{config_filename}, you might have an error in your local .todd file")

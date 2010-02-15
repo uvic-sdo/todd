@@ -1,3 +1,1 @@
-conf = {
-  :todd_hash      =>  'fef8533741ce208e4573acaf519a72ea'
-}
+todd_hash: fef8533741ce208e4573acaf519a72ea
