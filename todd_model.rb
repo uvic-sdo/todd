@@ -1,57 +1,14 @@
 require 'rubygems'
 require 'active_record'
+require 'yaml'
 
 require 'todd_util'
 
 # Setup Active Record
 
-#ActiveRecord::Base.logger = Logger.new(STDERR)
-#ActiveRecord::Base.colorize_logging = true
-
-ActiveRecord::Base.establish_connection(
-  :adapter  => 'sqlite3',
-  :database => '/home/carl/dev/todd/todd.db'
-)
-
-#ActiveRecord::Schema.define do
-#  create_table :todo_lists do |t|
-#    t.string      :md5_id,      :null => false
-#
-#    t.timestamps
-#  end
-#
-#  create_table :categories do |t|
-#    t.string      :name,        :null => false
-#
-#    t.references  :todo_list
-#
-#    t.timestamps
-#  end
-#
-#  create_table :tasks do |t|
-#    t.string      :title,       :null => false
-#    t.text        :notes,       :default => ""
-#    t.boolean     :running,     :default => false
-#    t.datetime    :start_time
-#    t.datetime    :total_time,  :default => Time.at(0)
-#
-#    t.references :category
-#
-#    t.timestamps
-#  end
-#
-#  create_table :archived_tasks do |t|
-#    t.string      :title,       :null => false
-#    t.text        :notes,       :default => ""
-#    t.boolean     :running,     :default => false
-#    t.datetime    :start_time
-#    t.datetime    :total_time
-#
-#    t.references :category
-#
-#    t.timestamps
-#  end
-#end
+ActiveRecord::Base.establish_connection(YAML::load(File.open('database.yml')))
+ActiveRecord::Base.logger = Logger.new(File.open('logs/database.log', 'a'))
+ActiveRecord.colorize_logging = false
 
 class TodoList < ActiveRecord::Base
   has_many :categories, :dependent => :destroy
