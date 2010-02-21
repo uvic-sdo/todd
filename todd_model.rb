@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'active_record'
+require 'terminal-table/import'
 
 require 'todd_util'
 
@@ -7,11 +8,25 @@ require 'todd_util'
 
 ActiveRecord::Base.establish_connection(YAML::load(File.open('database.yml')))
 ActiveRecord::Base.logger = Logger.new(File.open('logs/database.log', 'a'))
-ActiveRecord.colorize_logging = false
+ActiveRecord::Base.colorize_logging = false
 
 class TodoList < ActiveRecord::Base
   has_many :categories, :dependent => :destroy
   validates_uniqueness_of :md5_id
+
+  def bundle
+    bund = {
+      :type => :todolist,
+      :categories => []
+    }
+    
+    self.categories.each do |cat|
+      next unless cat.visible?
+      bund[:categories] << cat.bundle
+    end
+
+    bund
+  end
 end
 
 class Category < ActiveRecord::Base
@@ -19,16 +34,18 @@ class Category < ActiveRecord::Base
   has_many :archived_tasks
   validates_uniqueness_of :name
 
-  def format_to formatting = :human
-    format_str = ""
-    case formatting
-      when :human
-        format_str = "Category: %s"
-      else
-        puts "ERROR: Cannot format Category to #{formatting}"
-    end
+  def bundle
+    bund = {
+      :type => :category,
+      :name => name,
+      :tasks => []
+    }
     
-    format_str % name
+    self.tasks.each do |task|
+      bund[:tasks] << task.bundle
+    end
+
+    bund
   end
 
   def visible?
@@ -39,23 +56,18 @@ end
 class Task < ActiveRecord::Base
   belongs_to :category
 
-  def format_to formatting = :human
-    format_str = ""
-    case formatting
-      when :human
-        # sample: [id] [title] [session_time] [total_time]
-        format_str = "[%2s] [%-40s] [%11s] [%11s]"
-      else
-        puts "ERROR: Cannot format Task to #{formatting}"
-    end
+  def self.bundle_header
+    ['ID', 'Title', 'Session Time', 'Total Time']
+  end
 
-    format_str % [
-      id,
-      title,
-      (running ? time_period_to_s(session_time) : 'Not Running'),
-      (total_time ? time_period_to_s(total_time.to_i) : 'Never Run')
-    ]
-
+  def bundle
+    {
+      :type => :task,
+      :id => id,
+      :title => title,
+      :session_time => (running ? time_period_to_s(session_time) : 'Not Running'),
+      :total_time => (total_time.to_i > 0.1 ? time_period_to_s(total_time.to_i) : 'Never Run')
+    }
   end
 
   def start

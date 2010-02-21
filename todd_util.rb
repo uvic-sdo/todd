@@ -1,3 +1,5 @@
+require 'pp'
+
 def time_period_to_s time_period       
   if time_period < 1
     return "< 1 sec"
@@ -15,4 +17,45 @@ def time_period_to_s time_period
   end
 
   out_str
+end
+
+def format_bundle bundle, formatting = :table
+  case formatting
+    when :table
+      return format_to_table bundle
+    else
+      puts "ERROR: Cannot format bundle to #{formatting}"
+      exit
+  end
+end
+
+def format_to_table stack, ret_table = true
+  stack = [stack] unless stack.class == [].class
+  rows = []
+
+  while item = stack.pop
+    case item[:type]
+      when :todolist
+        stack =  item[:categories]
+      when :category
+        rows << ['Category:',item[:name],'','']
+        rows << :separator
+        rows += format_to_table item[:tasks], false
+        rows << :separator unless stack.empty?
+      when :task
+        rows << [
+          item[:id],
+          item[:title],
+          item[:session_time],
+          item[:total_time]
+        ]
+      else
+        puts "ERROR: Bundle type #{bundle[:type]} not recognized"
+        exit
+    end
+  end
+
+  return rows unless ret_table
+
+  table(Task.bundle_header, *rows)
 end

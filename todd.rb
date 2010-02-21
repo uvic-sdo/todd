@@ -3,13 +3,14 @@
 require 'todd_model'
 require 'todd_util'
 require 'digest/md5'
+require 'pp'
 
 config = {
   :default_db_path  =>  "/home/carl/dev/todd/test.db",
   :config_filename  =>  ".todd",
   :default_category =>  "default",
   :default_config   =>  "conf = {\n  :todd_hash      =>  '%s'\n}",
-  :output_format    =>  :human      #:human -> human readable output
+  :output_format    =>  :table
 }
 
 module Docs
@@ -34,10 +35,7 @@ class Todd
 
   def initialize(config)
     @config = config
-  end
-
-  def get_todolist
-    TodoList.first(:conditions => { :md5_id => @config[:todd_hash] })
+    @todo_list = TodoList.first(:conditions => { :md5_id => @config[:todd_hash] })
   end
 
   # COMMANDS
@@ -71,7 +69,7 @@ class Todd
 
     puts "Task: #{task_str}"
 
-    category = get_todolist.categories.find_or_create_by_name(category_name)
+    category = @todo_list.categories.find_or_create_by_name(category_name)
     task = category.tasks.create(:title => task_str)
   end
 
@@ -80,19 +78,7 @@ class Todd
   end
 
   def list
-    get_todolist.categories.all.each do |cat|
-      next if !cat.visible?
-
-      if cat.name != @config[:default_category]
-        puts cat.format_to @config[:output_format]
-      end
-
-      cat.tasks.all.each do |task|
-        puts task.format_to @config[:output_format]
-      end
-
-      print "\n"
-    end
+    puts format_bundle @todo_list.bundle, @config[:output_format]
   end
 
   def find
@@ -101,13 +87,12 @@ class Todd
   def start id
     t = Task.find(id).start!
     puts t ? "Task #{t.id} started" : "Task already running"
-    puts t.format_to @config[:output_format] if t
   end
 
   def stop id
     t = Task.find(id).stop!
     puts t ? "Task #{t.id} stopped" : "Task already stopped"
-    puts t.format_to @config[:output_format] if t
+    puts format_bundle t.bundle
   end
 
   def add_remote
@@ -122,7 +107,9 @@ end
 # Parse the .todd file if it exists
 begin
   conf = YAML.load(File.open(config[:config_filename], 'r').read)
-  config = conf.merge(config) unless conf == nil
+  conf.each { |key, val|
+    config[key.to_sym] = val
+  } unless conf == nil
 rescue ScriptError=>e
   warn("Error reading #{config_filename}, you might have an error in your local .todd file")
 rescue
@@ -139,6 +126,8 @@ if ARGV.length > 0
   begin
     todd.send(command.to_sym, *ARGV)
   rescue ArgumentError => e
+    puts e
+    pp e.backtrace
     docs_for command
   end
 
