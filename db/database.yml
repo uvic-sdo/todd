@@ -1,0 +1,2 @@
+adapter: sqlite3
+database: /home/carl/dev/todd/db/todd.db
