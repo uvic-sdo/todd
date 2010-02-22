@@ -15,13 +15,14 @@ config = {
 
 module Docs
   Short = {
-    :init  => ["todd init        ", "Initialize a Todd list in the local directory."],
-    :add   => ["todd add <string>", "Add an item to the local Todd list."],
-    :rm    => ["todd rm <id>     ", "Remove an item from the local todo list."],
-    :list  => ["todd list        ", "List all items in all categories."],
-    :find  => ["todd find <query>", "List all items which match the query."],
-    :start => ["todd start <id>  ", "Start the timer on task with id == <id>."],
-    :stop  => ["todd stop <id>   ", "Stop the timer on task with id == <id>."]
+    :init     => ["todd init          ", "Initialize a Todd list in the local directory."],
+    :add      => ["todd add <string>  ", "Add an item to the local Todd list."],
+    :rm       => ["todd rm <id>       ", "Remove an item from the local todo list."],
+    :list     => ["todd list          ", "List all items in all categories."],
+    :find     => ["todd find <query>  ", "List all items which match the query."],
+    :start    => ["todd start <id>    ", "Start the timer on task with id == <id>."],
+    :stop     => ["todd stop <id>     ", "Stop the timer on task with id == <id>."],
+    :listd    => ["todd listd         ", "List all deleted tasks."]
   }
 end
 
@@ -95,12 +96,20 @@ class Todd
     puts format_bundle t.bundle, @config[:output_format] if t
   end
 
+  def listd
+    puts "Not Implemented"
+  end
+
+  def restore
+    puts "Not Implemented"
+  end
+
   def add_remote
-    p "Not Implemented"
+    puts "Not Implemented"
   end
 
   def sync
-    p "Not Implemented"
+    puts "Not Implemented"
   end
 end
 

@@ -13,13 +13,16 @@ task :enviroment do
 end
 
 task :migration do
-  migration_name = ask("Migration Name:  ").downcase.sub!(/\s/, '_')
-  File.open(Time.now.strftime("migrations/%m%d%y%H%M_#{migration_name}.rb"), 'w') do |file|
+  migration_name = ask("Migration Name (Uppercase+Spaces):  ")
+  klass_name = migration_name.gsub(/\s/, '')
+  file_name = migration_name.downcase.gsub(/\s/, '_')
+  File.open(Time.now.strftime("migrations/%m%d%y%H%M_#{file_name}.rb"), 'w') do |file|
     file.write(<<-eos)
-class #{migration_name} < ActiveRecord::Migration
+class #{klass_name} < ActiveRecord::Migration
   def self.up
   end
-def self.down
+
+  def self.down
   end
 end
     eos

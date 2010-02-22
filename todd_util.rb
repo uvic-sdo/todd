@@ -34,7 +34,7 @@ def to_minimal_time_s time_period
   time_period = time_period.to_i
 
   out_str = ''
-  interval_array = [60, 1]
+  interval_array = [3600, 60, 1]
   interval_array.each do |sub|
     if time_period >= sub then
       time_val, time_period = time_period.divmod(sub)
@@ -118,12 +118,11 @@ def format_minimal stack, ret_string = true
         rows << [
           item[:id],
           item[:active] ? 'x' : ' ',
-          to_minimal_time_s(item[:session_time]),
           to_minimal_time_s(item[:total_time]),
           item[:title]
         ].map { |e|
           "[%s]" % e
-        } * " "
+        } * " " + (item[:active] ? " [%s]" % to_minimal_time_s(item[:session_time]) : '')
       else
         puts "ERROR: Bundle type #{bundle[:type]} not recognized"
         exit

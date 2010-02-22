@@ -66,32 +66,31 @@ class Task < ActiveRecord::Base
     }
   end
 
-  def start
-    return nil if running
-    self[:start_time] = Time.now
-    toggle(:running)
-
-    self
-  end
-
   def start!
-    return nil if !self.start
-    self.save
-    self
-  end
+    return nil if running
 
-  def stop
-    return nil if !running
-    self[:total_time] += (Time.now - start_time)
-    self[:start_time] = nil
+    punch = Punch.new
+    punch.clock_in!
+
+    self[:current_punch] = punch.id
     toggle(:running)
+
+    self.save
 
     self
   end
 
   def stop!
-    return nil if !self.stop
+    return nil if !running
+
+    punch = Punch.find(current_punch)
+    session_time = punch.clock_out!
+
+    self[:total_time] += session_time if session_time
+    toggle(:running)
+
     self.save
+
     self
   end
 
@@ -100,8 +99,35 @@ class Task < ActiveRecord::Base
   end
 
   def session_time
-    return Time.now - start_time if running
-    0
+    running ? Punch.find(current_punch).session_time : 0
+  end
+end
+
+class Punch < ActiveRecord::Base
+  belongs_to :task
+
+  def clock_in!
+    return false if running
+    self[:start] = Time.now
+    toggle(:running)
+
+    self.save
+    
+    true
+  end
+
+  def clock_out!
+    return nil unless running
+    self[:stop] = Time.now
+    toggle(:running)
+
+    self.save
+
+    session_time
+  end
+
+  def session_time
+    running ? (Time.now - start) : (stop - start)
   end
 end
 
