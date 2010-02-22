@@ -9,7 +9,7 @@ end
 task :enviroment do
   ActiveRecord::Base.establish_connection(YAML::load(File.open('database.yml')))
   ActiveRecord::Base.logger = Logger.new(File.open('logs/migrations.log', 'a'))
-  ActiveRecord.colorize_logging = false
+  ActiveRecord::Base.colorize_logging = false
 end
 
 task :migration do

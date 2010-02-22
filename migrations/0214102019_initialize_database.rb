@@ -1,4 +1,4 @@
-class initialize_database < ActiveRecord::Migration
+class InitializeDatabase < ActiveRecord::Migration
   def self.up
     create_table :todo_lists do |t|
       t.string      :md5_id,      :null => false
