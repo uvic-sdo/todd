@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'active_record'
-require 'terminal-table/import'
 
 require 'todd_util'
 
@@ -56,17 +55,14 @@ end
 class Task < ActiveRecord::Base
   belongs_to :category
 
-  def self.bundle_header
-    ['ID', 'Title', 'Session Time', 'Total Time']
-  end
-
   def bundle
     {
       :type => :task,
       :id => id,
       :title => title,
-      :session_time => (running ? time_period_to_s(session_time) : 'Not Running'),
-      :total_time => (total_time.to_i > 0.1 ? time_period_to_s(total_time.to_i) : 'Never Run')
+      :active => running,
+      :session_time => session_time,
+      :total_time => total_time
     }
   end
 

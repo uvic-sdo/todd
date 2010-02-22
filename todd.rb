@@ -9,8 +9,8 @@ config = {
   :default_db_path  =>  "/home/carl/dev/todd/test.db",
   :config_filename  =>  ".todd",
   :default_category =>  "default",
-  :default_config   =>  "conf = {\n  :todd_hash      =>  '%s'\n}",
-  :output_format    =>  :table
+  :default_config   =>  "todd_hash: %s\n",
+  :output_format    =>  "minimal"
 }
 
 module Docs
@@ -92,7 +92,7 @@ class Todd
   def stop id
     t = Task.find(id).stop!
     puts t ? "Task #{t.id} stopped" : "Task already stopped"
-    puts format_bundle t.bundle
+    puts format_bundle t.bundle, @config[:output_format] if t
   end
 
   def add_remote
@@ -105,15 +105,24 @@ class Todd
 end
 
 # Parse the .todd file if it exists
-begin
-  conf = YAML.load(File.open(config[:config_filename], 'r').read)
-  conf.each { |key, val|
-    config[key.to_sym] = val
-  } unless conf == nil
-rescue ScriptError=>e
-  warn("Error reading #{config_filename}, you might have an error in your local .todd file")
-rescue
-  warn("Error finding #{config_filename}") unless ARGV.include? "init"
+
+if File.exists? config[:config_filename]
+  begin
+    conf = YAML.load(File.open(config[:config_filename], 'r').read)
+    conf.each { |key, val|
+      config[key.to_sym] = val
+    } unless conf == nil
+  rescue ScriptError=>e
+    warn("Error reading #{config[:config_filename]}, you might have an error in your local .todd file")
+    puts "Exception Trace:"
+    pp e
+    exit
+  end
+else
+  unless ARGV.include? "init"
+    warn("Error finding #{config[:config_filename]}")
+    exit
+  end
 end
 
 todd = Todd.new(config)
