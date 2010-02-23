@@ -13,25 +13,29 @@ module Todd
       TodoList.first(:conditions => { :md5_id => Base[:todd_hash] })
     end
 
-    def self.find query, category_ids
+    def self.find query, category_ids, archived = false
       found = []
+      query ||= 'last'
+
       case query
         when 'all'
-          found = Task.all(:conditions => {:category_id => category_ids})
+          found = Task.find(:all, :conditions => {:category_id => category_ids, :archived => archived})
         when 'last'
-          found << Task.first(:conditions => {:category_id => category_ids}, :order => "created_at DESC")
+          found << Task.find(:first, :conditions => {:category_id => category_ids, :archived => archived}, :order => "updated_at DESC")
         when 'active', 'running', 'started'
-          found = Task.all(:conditions => {:category_id => category_ids, :running => true})
+          found = Task.find(:all, :conditions => {:category_id => category_ids, :running => true, :archived => archived})
         when 'inactive', 'stopped'
-          found = Task.all(:conditions => {:category_id => category_ids, :running => false})
+          found = Task.find(:all, :conditions => {:category_id => category_ids, :running => false, :archived => archived})
         when /(\d+)\.\.(\d+)/
-          found = Task.all(:conditions => {:category_id => category_ids, :id => $1.to_i..$2.to_i})
+          found = Task.find(:all, :conditions => {:category_id => category_ids, :id => $1.to_i..$2.to_i, :archived => archived})
         when /(\d+)/
-          found << Task.find($1.to_i, :conditions => {:category_id => category_ids})
+          found << Task.find($1.to_i, :conditions => {:category_id => category_ids, :archived => archived})
         else
           warn "Invalid query: #{query}"
           exit
       end
+      
+      raise ActiveRecord::RecordNotFound if found == [nil]
 
       if block_given?
         found.each do |f|
@@ -41,13 +45,7 @@ module Todd
 
       found
     rescue ActiveRecord::RecordNotFound => e
-      puts "Query not found"
-      pp e
-      if block_given?
-        yield nil
-      end
-
-      []
+      puts "Not task matched query"
     end
         
   end
@@ -68,7 +66,7 @@ module Todd
       @_category_ids
     end
 
-    def bundle query = nil
+    def bundle query = nil, archived = false
       bund = {
         :type => :todolist,
         :categories => []
@@ -76,7 +74,7 @@ module Todd
       
       self.categories.each do |cat|
         next unless cat.visible?
-        sub_bundle = cat.bundle(query)
+        sub_bundle = cat.bundle(query, archived)
         bund[:categories] << sub_bundle unless sub_bundle[:tasks] == []
       end
 
@@ -105,6 +103,20 @@ module Todd
       end
     end
 
+    def archive query
+      DB.find(query, category_ids) do |t|
+        t = t.archive!
+        puts t ? "Archived Task #{t.id}" : "Cannot archive active task"
+      end
+    end
+
+    def restore query
+      DB.find(query, category_ids, true) do |t|
+        puts "Restored Task #{t.id}"
+        t.restore!
+      end
+    end
+
     def start query
       DB.find(query, category_ids) do |t|
         t = t.start!
@@ -129,16 +141,16 @@ module Todd
     has_many :archived_tasks
     validates_uniqueness_of :name
 
-    def bundle query = nil
+    def bundle query = nil, archived = false
       bund = {
         :type => :category,
         :name => name,
         :tasks => []
       }
       
-      found = (query != nil) ? DB.find(query, [id]) : self.tasks
+      found = (query != nil) ? DB.find(query, [id], archived) : self.tasks
       found.each do |task|
-        bund[:tasks] << task.bundle
+        bund[:tasks] << task.bundle if task.archived == archived
       end
 
       bund
@@ -191,8 +203,20 @@ module Todd
       self
     end
 
-    def before_destroy
-      ArchivedTask.create(self.clone.attributes)
+    def archive!
+      return nil if running
+
+      self[:archived] = true
+      self.save
+
+      self
+    end
+
+    def restore!
+      self[:archived] = false
+      self.save
+      
+      self
     end
 
     def session_time
@@ -225,15 +249,6 @@ module Todd
 
     def session_time
       running ? (Time.now - start) : (stop - start)
-    end
-  end
-
-  class ArchivedTask < ActiveRecord::Base
-    belongs_to :category
-
-    def restore
-      # TODO :: Restore category if needed
-      # TODO :: Restore task
     end
   end
 end

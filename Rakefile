@@ -13,6 +13,8 @@ Echoe.new 'todd', Todd::VERSION do |p|
   p.url = "http://github.com/carlsverre/todd"
   p.runtime_dependencies << 'commander >=4.0.2'
   p.runtime_dependencies << 'active_record >=2.3.5'
+  p.runtime_dependencies << 'terminal_table >=1.4.2'
+  p.runtime_dependencies << 'json >=1.2.0'
 end 
 
 Dir['tasks/**/*.rake'].sort.each { |f| load f }

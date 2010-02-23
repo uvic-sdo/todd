@@ -1,5 +1,10 @@
 Todo List:
 
-* Move rake tasks into tasks dir
 * Todd-Repl to do batch task-management
 * ~/.todd config file for global options, ./.todd for local todo-lists
+* add super simple markdown output formatting for git commit msgs
+* move formatters into their own namespaces and seperate classes
+* todd start --monitor <max_time>
+* add graphs!!!!
+* add test framework
+* add rdoc

@@ -70,6 +70,7 @@ module Todd
     def self.format_to_table stack, ret_table = true
       stack = [stack] unless stack.class == [].class
       rows = []
+      header = ["ID", "Task", "Session Time", "Total Time"]
 
       while item = stack.pop
         case item[:type]
@@ -98,21 +99,33 @@ module Todd
 
       return rows unless ret_table
 
-      table(["ID", "Task", "Session Time", "Total Time"], *rows)
+      table(header, *rows)
     end
 
     def self.format_minimal stack, ret_string = true
       stack = [stack] unless stack.class == [].class
       rows = []
+      default_category = Base[:default_category]
 
       while item = stack.pop
         case item[:type]
           when :todolist
-            return "" if item[:categories] == []
-            stack =  item[:categories]
+            return "Nothing to list" if item[:categories] == []
+            stack = item[:categories]
+            stack.sort! do |x,y|
+              case default_category
+                when x[:name]
+                  ret = 1
+                when y[:name]
+                  ret = -1
+                else
+                  ret = x[:name] <=> y[:name]
+              end
+              ret
+            end
           when :category
             return "" if item[:task] == []
-            rows << "+ #{item[:name]}"
+            rows << "+ #{item[:name]}" unless item[:name] == Base[:default_category]
             rows += self.format_minimal item[:tasks], false
             rows << " " unless stack.empty?
           when :task
@@ -132,7 +145,6 @@ module Todd
 
       return rows unless ret_string
 
-      rows << "\n"
       rows * "\n"
     end
   end

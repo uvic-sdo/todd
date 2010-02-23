@@ -35,7 +35,8 @@ module Todd
         end
       else
         unless ARGV.include? "init"
-          warn("error finding #{@config[:config_filename]}")
+          warn("Error finding #{@config[:config_filename]}")
+          warn("If you want to use Todd in this dir, please run todd init")
           exit
         end
       end
@@ -57,6 +58,10 @@ module Todd
       end
 
       puts "Initialized Todd in #{current_dir}"
+    end
+
+    def self.set_formatting format
+      @__instance__.config[:output_format] = format
     end
   end
 end
