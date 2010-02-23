@@ -3,7 +3,7 @@ require 'active_record'
 require 'highline/import'
 
 task :migrate => :enviroment do
-  ActiveRecord::Migrator.migrate('migrations', nil)
+  ActiveRecord::Migrator.migrate('db/migrations', nil)
 end
 
 task :enviroment do

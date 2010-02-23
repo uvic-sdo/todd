@@ -11,6 +11,9 @@ class AddPunchTable < ActiveRecord::Migration
     remove_column :tasks, :start_time
     add_column    :tasks, :current_punch, :integer
 
+    remove_column :archived_tasks, :start_time
+    add_column    :archived_tasks, :current_punch, :integer
+
   end
 
   def self.down
@@ -19,5 +22,7 @@ class AddPunchTable < ActiveRecord::Migration
     add_column    :tasks, :start_time, :boolean
     remove_column :tasks, :current_punch
 
+    add_column    :archived_tasks, :start_time, :boolean
+    remove_column :archived_tasks, :current_punch
   end
 end

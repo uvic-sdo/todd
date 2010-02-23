@@ -8,16 +8,36 @@ require 'todd'
 program :version, Todd::VERSION
 program :description, "Todd: Time Tracking"
 
-Todd::initialize_db
+Todd::Base.setup
+Todd::DB.initialize_db
+list = Todd::DB.get_current_list
 
-default_command :list
+default_command :help
 
 command :init do |c|
   c.syntax = 'todd init'
   c.summary = 'Initialize Todd'
   c.description = 'Initialize Todd in the current directory'
-  c.action do
-    # TODO: Todd init
+  c.action do |args, options|
+    Todd::Base.init_local_dir
+  end
+end
+
+command :list do |c|
+  c.syntax = 'todd list'
+  c.summary = 'List all tasks'
+  c.description = 'List all the tasks in the current Todd List'
+  c.action do |args, options|
+    puts Todd::Util.format_bundle list.bundle
+  end
+end
+
+command :find do |c|
+  c.syntax = 'todd find [query]'
+  c.summary = 'Find tasks matching query'
+  c.description = 'Find all tasks which match the query in the current Todd List'
+  c.action do |args, options|
+    puts Todd::Util.format_bundle list.bundle args.shift
   end
 end
 
@@ -25,8 +45,17 @@ command :add do |c|
   c.syntax = 'todd add [task]'
   c.summary = 'Add a task'
   c.description = 'Add a task to the current Todd List'
-  c.action do
-    # TODO: Todd add
+  c.action do |args, options|
+    list.add args.shift
+  end
+end
+
+command :rm do |c|
+  c.syntax = 'todd rm [query]'
+  c.summary = 'Remove tasks'
+  c.description = 'Remove all tasks which match the query'
+  c.action do |args, options|
+    list.rm args.shift
   end
 end
 

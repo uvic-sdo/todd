@@ -31,7 +31,7 @@ class InitializeDatabase < ActiveRecord::Migration
       t.text        :notes,       :default => ""
       t.boolean     :running,     :default => false
       t.datetime    :start_time
-      t.datetime    :total_time
+      t.datetime    :total_time, :default => Time.at(0)
 
       t.references :category
 
