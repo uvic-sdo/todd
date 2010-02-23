@@ -1,3 +1,19 @@
+commit 83697d83ada204efa36f1671365ff57148f69634
+Author: Carl Sverre <carl@icehouse.(none)>
+Date:   Mon Feb 22 17:42:25 2010 -0800
+
+    More commander implementation, lots of bug fixes and api changes
+
+commit f9832591a16c7ac4e261b907e39f213ac9c30b9a
+Author: Carl Sverre <carl@iced.(none)>
+Date:   Mon Feb 22 00:12:33 2010 -0800
+
+    BROKEN COMMIT :: Moving to Gem module dir format
+    
+    New dir layout
+    In process of migrating todd to use Vision Media's commander gem
+    In process of making this gem friendly
+
 commit aa377f13fd01481b0ebaf1c6a374f3f95addd1a4
 Author: Carl Sverre <carl@iced.(none)>
 Date:   Sun Feb 21 23:45:08 2010 -0800
