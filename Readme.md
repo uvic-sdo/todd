@@ -3,6 +3,13 @@ Todd
 
 Powerful todo-list action at your fingertips.
 
+Contribution
+============
+
+Right now Todd is still in its growth stages, so if you are interested
+in contributing be aware that any part of the Todd api could change at any
+moment.
+
 Commands
 --------
 
