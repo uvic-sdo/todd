@@ -22,4 +22,3 @@ tasks/migrate.rake
 tasks/migration.rake
 tasks/revert.rake
 tasks/revert_db.rake
-todd.gemspec
